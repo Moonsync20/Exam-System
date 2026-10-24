@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "{index.html,style.css,app.js,data.js,project_defense_guide.html,ExamStudio_Project_Guide_and_Viva_Prep.pdf}",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
