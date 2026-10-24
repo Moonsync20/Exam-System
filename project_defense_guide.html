@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ExamStudio — Comprehensive Project Architecture, Code Flow & Viva Defense Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Crimson+Pro:ital,wght@0,600;1,400&display=swap');
+
+    :root {
+      --primary: #4338ca;
+      --primary-light: #eef2ff;
+      --secondary: #0f172a;
+      --accent: #6366f1;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --bg: #f8fafc;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --success: #059669;
+      --success-light: #ecfdf5;
+      --warning: #d97706;
+      --warning-light: #fffbeb;
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+    }
+
+    @page {
+      size: A4;
+      margin: 18mm 16mm;
+      @bottom-right {
+        content: counter(page);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 9pt;
+        color: #94a3b8;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 10pt;
+      line-height: 1.6;
+      color: var(--text);
+      background: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .cover {
+      page-break-after: always;
+      padding: 60px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 85vh;
+      border-left: 6px solid var(--primary);
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .cover-tag {
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+    }
+
+    .cover-title {
+      font-size: 28pt;
+      font-weight: 800;
+      color: var(--secondary);
+      line-height: 1.15;
+      margin: 0 0 14px;
+    }
+
+    .cover-subtitle {
+      font-size: 14pt;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin: 0 0 40px;
+      line-height: 1.4;
+    }
+
+    .cover-meta {
+      margin-top: auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-item b {
+      display: block;
+      font-size: 8.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .meta-item span {
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 24px 0;
+    }
+
+    h1, h2, h3, h4 {
+      color: var(--secondary);
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    h1 {
+      font-size: 18pt;
+      margin-top: 36px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--primary);
+      page-break-after: avoid;
+    }
+
+    h2 {
+      font-size: 13.5pt;
+      margin-top: 28px;
+      margin-bottom: 12px;
+      color: var(--primary);
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 11pt;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul, ol {
+      margin: 0 0 14px;
+      padding-left: 22px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    code, kbd {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5pt;
+      padding: 2px 6px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: #b91c1c;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5pt;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin: 14px 0;
+      page-break-inside: avoid;
+    }
+
+    pre code {
+      background: transparent;
+      border: none;
+      color: inherit;
+      padding: 0;
+    }
+
+    .callout {
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 14px 0;
+      border-left: 4px solid var(--primary);
+      background: var(--primary-light);
+      page-break-inside: avoid;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 10pt;
+      margin-bottom: 4px;
+      color: var(--primary);
+    }
+
+    .callout.success {
+      border-left-color: var(--success);
+      background: var(--success-light);
+    }
+    .callout.success .callout-title { color: var(--success); }
+
+    .callout.warning {
+      border-left-color: var(--warning);
+      background: var(--warning-light);
+    }
+    .callout.warning .callout-title { color: var(--warning); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    tr:nth-child(even) { background: #fafafa; }
+
+    .qa-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 14px 0;
+      page-break-inside: avoid;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .qa-q {
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 6px;
+      font-size: 10.5pt;
+      display: flex;
+      gap: 8px;
+    }
+
+    .qa-q span.q-badge {
+      background: var(--primary);
+      color: #fff;
+      font-size: 8pt;
+      padding: 2px 6px;
+      border-radius: 4px;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+
+    .qa-a {
+      font-size: 9.5pt;
+      color: var(--text);
+    }
+
+    .qa-a b {
+      color: var(--secondary);
+    }
+
+    .diagram {
+      background: #f8fafc;
+      border: 1px dashed var(--border-dark);
+      padding: 14px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8pt;
+      line-height: 1.4;
+      white-space: pre;
+      margin: 14px 0;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+
+    .toc {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 24px;
+      margin: 24px 0;
+    }
+
+    .toc ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    .toc li {
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .toc a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .page-break {
+      page-break-after: always;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ======================================================================= -->
+  <!-- COVER PAGE                                                              -->
+  <!-- ======================================================================= -->
+  <div class="cover">
+    <div class="cover-tag">Computer Science &amp; Engineering · Mid-Semester Project</div>
+    <h1 class="cover-title">ExamStudio: Smart Question Paper &amp; Answer-Key Studio</h1>
+    <div class="cover-subtitle">Complete Architecture, Reactive Code Flow, Algorithmic Analysis &amp; Comprehensive Viva Defense Preparation Guide</div>
+
+    <div class="callout" style="margin: 20px 0;">
+      <div class="callout-title">Project Defense Objective</div>
+      This comprehensive handbook details the full architectural lifecycle, internal data flow, state synchronization, mathematical formulas, and algorithmic design of ExamStudio. It equips the presenter to answer every examiner/teacher question with authoritative technical precision.
+    </div>
+
+    <div class="cover-meta">
+      <div class="meta-item">
+        <b>Project Category</b>
+        <span>Web Application / Academic Productivity</span>
+      </div>
+      <div class="meta-item">
+        <b>Core Technologies</b>
+        <span>Vanilla ES6+, CSS3 Design System, Node.js, MathLive, KaTeX</span>
+      </div>
+      <div class="meta-item">
+        <b>Evaluation Target</b>
+        <span>Mid-Semester Examination Project Viva</span>
+      </div>
+      <div class="meta-item">
+        <b>Architecture Type</b>
+        <span>Event-Driven Single-Page Application (SPA)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ======================================================================= -->
+    <!-- TABLE OF CONTENTS                                                       -->
+    <!-- ======================================================================= -->
+    <div class="toc">
+      <h3 style="margin-top:0; color:var(--primary); font-size:12pt;">📋 Table of Contents</h3>
+      <ul>
+        <li>1. Executive Summary &amp; Problem Statement</li>
+        <li>2. High-Level Architecture &amp; Technology Stack</li>
+        <li>3. Complete Code Lifecycle &amp; Reactive Execution Flow</li>
+        <li>4. Core Algorithmic Formulations &amp; Mathematical Engine</li>
+        <li>5. Deep-Dive File Breakdown (Line-by-Line Architecture)</li>
+        <li>6. Feature Breakdown (Formulas, Sub-Questions, Answer Spaces, Multi-Sets)</li>
+        <li>7. Printing &amp; PDF Generation Engine</li>
+        <li>8. 25+ Teacher Viva Questions &amp; Top-Score Answers</li>
+        <li>9. Project Strengths &amp; Future Roadmap</li>
+      </ul>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 1: EXECUTIVE SUMMARY                                            -->
+    <!-- ======================================================================= -->
+    <h1>1. Executive Summary &amp; Problem Statement</h1>
+    <p>
+      In academic institutions, setting formal examination question papers is a critical yet notoriously tedious and error-prone process. Teachers traditionally use general-purpose word processors (like Microsoft Word) or raw LaTeX editors. These tools suffer from several severe limitations:
+    </p>
+    <ul>
+      <li><strong>No Real-Time Tallying:</strong> Teachers frequently make arithmetic errors where sub-question marks do not sum up to the section or paper target.</li>
+      <li><strong>Complex Math Typesetting:</strong> Writing LaTeX equations requires memorizing arcane syntax; non-technical faculty struggle with syntax errors.</li>
+      <li><strong>No Anti-Cheating Set Shuffling:</strong> Creating multiple randomized examination sets (e.g. Set A, Set B, Set C, Set D) requires hours of manual copy-pasting, risking misplaced answer keys.</li>
+      <li><strong>Disconnected Marking Schemes:</strong> Creating official teacher solution keys requires maintaining a separate document, leading to discrepancies.</li>
+      <li><strong>No Direct Quiz / Class Test Mode:</strong> Generating papers with blank unruled handwriting spaces for student responses directly on the paper requires manual spacing hacks in Word.</li>
+    </ul>
+
+    <p>
+      <strong>ExamStudio</strong> solves all these problems through a reactive, dual-typography, split-screen web application. It gives teachers real-time visual A4 feedback, automatic marks &amp; duration diagnostics, an interactive WYSIWYG equation editor, native Bengali (বাংলা) font rendering, unruled handwriting space formatting, and an automated 1-click Fisher–Yates multi-set generator with vector PDF printing.
+    </p>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 2: SYSTEM ARCHITECTURE                                          -->
+    <!-- ======================================================================= -->
+    <h1>2. High-Level Architecture &amp; Technology Stack</h1>
+    
+    <div class="diagram">
++-----------------------------------------------------------------------------------------------+
+|                                    EXAMSTUDIO ARCHITECTURE                                     |
++-----------------------------------------------------------------------------------------------+
+                                                │
+                 ┌──────────────────────────────┴──────────────────────────────┐
+                 ▼                                                             ▼
+    +─────────────────────────+                                   +─────────────────────────+
+    |   BACKEND (server.js)   |                                   |  FRONTEND SPA (Client)  |
+    +─────────────────────────+                                   +─────────────────────────+
+    | • Zero-dependency HTTP  |                                   | • Vanilla ES6+ Engine   |
+    | • Static asset stream   |                                   | • Single State Store    |
+    | • Dynamic MIME router   |                                   | • LocalStorage Sync     |
+    +─────────────────────────+                                   +─────────────────────────+
+                                                                               │
+                                    ┌──────────────────────────────────────────┼──────────────────────────────────────────┐
+                                    ▼                                          ▼                                          ▼
+                      +───────────────────────────+              +───────────────────────────+              +───────────────────────────+
+                      |   STUDIO PANEL (Input)    |              |    REACTIVE CORE ENGINE   |              |  LIVE CANVAS (Simulation) |
+                      +───────────────────────────+              +───────────────────────────+              +───────────────────────────+
+                      | • Add Question Form       |              | • updateDiagnostics()     |              | • Realistic A4 Sheet      |
+                      | • MathLive WYSIWYG Editor |  ──events──> | • Fisher-Yates Shuffler   |  ──render──> | • Academic Serif Typeset  |
+                      | • Sub-Questions Builder   |              | • KaTeX Regex Parser      |              | • Dynamic Answer Spaces   |
+                      | • Paper Header Metadata   |              | • Multi-Set Manager       |              | • Teacher Key Watermark   |
+                      +───────────────────────────+              +───────────────────────────+              +───────────────────────────+
+    </div>
+
+    <h2>Technology Stack Choices &amp; Justifications</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Technology</th>
+          <th>Architectural Justification (Why this was chosen)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Core Language</strong></td>
+          <td>Vanilla JavaScript (ES6+)</td>
+          <td>Zero build steps, instant load times, maximum browser compatibility, no virtual-DOM overhead, easy evaluation and deployment without <code>npm install</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Styling</strong></td>
+          <td>Vanilla CSS3 with Custom Properties</td>
+          <td>100% fine-grained control over A4 page simulation, print stylesheets (<code>@page</code>, <code>break-inside: avoid</code>), glassmorphism, and responsive grid layouts.</td>
+        </tr>
+        <tr>
+          <td><strong>Typography</strong></td>
+          <td>Google Fonts (Crimson Pro, Noto Serif Bengali, Plus Jakarta Sans)</td>
+          <td>Dual-typography paradigm: High-precision sans-serif for UI productivity, coupled with formal academic serif typography for both English and Bengali question papers.</td>
+        </tr>
+        <tr>
+          <td><strong>Math Engine</strong></td>
+          <td>MathLive &amp; KaTeX</td>
+          <td>MathLive provides a visual keyboard and interactive palette; KaTeX provides ultra-fast server/client mathematical equation rendering ($O(1)$ visual render without MathJax latency).</td>
+        </tr>
+        <tr>
+          <td><strong>State &amp; Storage</strong></td>
+          <td>In-Memory State + <code>localStorage</code></td>
+          <td>Single Source of Truth (SSOT). Instant cross-session persistence without needing an external database setup for local classroom use.</td>
+        </tr>
+        <tr>
+          <td><strong>Backend Server</strong></td>
+          <td>Node.js Built-in <code>http</code> module</td>
+          <td>Completely lightweight, zero external npm package dependencies, robust file streaming, and custom MIME routing.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 3: CODE FLOW & LIFECYCLE                                        -->
+    <!-- ======================================================================= -->
+    <h1>3. Complete Code Lifecycle &amp; Reactive Execution Flow</h1>
+    <p>
+      The application operates on a unidirectional reactive data cycle. When any element changes (keystroke, question added, stepper clicked, set switched), state is updated, persisted, and a global re-render is triggered.
+    </p>
+
+    <h2>Step 1: Application Initialization (`initApp()`)</h2>
+    <p>When the DOM content loads, <code>initApp()</code> executes in <code>app.js</code>:</p>
+    <ol>
+      <li><code>loadState()</code>: Retrieves <code>examStudio_state_v2</code> from <code>localStorage</code>. If missing or corrupt, falls back to <code>freshState()</code> (loading default DBMS exam data from <code>data.js</code>). Automatically migrates legacy data, normalizes question structures, and initializes <code>state.sets</code>.</li>
+      <li><code>fillConfigForm()</code>: Populates sidebar input fields with matching <code>[data-key]</code> attributes.</li>
+      <li><code>bindEvents()</code>: Attaches global event listeners for navigation tabs, question forms, keyboard shortcuts (<code>Ctrl+M</code>, <code>Ctrl+Enter</code>), mark steppers, and question hover tools.</li>
+      <li><code>initSubQuestionBuilder()</code>: Sets up the visual sub-question row manager.</li>
+      <li><code>initMultiSets()</code>: Binds count chips, shuffle options, batch print triggers, and modal handlers.</li>
+      <li><code>setView(isKey)</code>: Sets paper display mode (Student Paper vs. Teacher Answer Key).</li>
+      <li><code>render()</code>: Triggers the master rendering pipeline.</li>
+    </ol>
+
+    <h2>Step 2: Master Render Pipeline (`render()`)</h2>
+    <div class="diagram">
+                                  render()
+                                     │
+         ┌───────────────────────────┼───────────────────────────┐
+         ▼                           ▼                           ▼
+ updateDiagnostics()        renderPaperPreview()          renderOutline()
+  • Tally Marks (reduce)     • Bind Header Meta            • Part A List
+  • Calculate Time           • Render Part A (MCQ)         • Part B List
+  • SVG Ring Offset          • Render Part B (Written)     • Reorder Buttons
+  • Balance Percentages      • Render Answer Spaces        • Marks Badges
+                             • Render Solutions / Keys
+    </div>
+
+    <h2>Step 3: Question Authoring &amp; Mark Breakdown Flow</h2>
+    <ol>
+      <li>User enters prompt in <code>#inputQuestionText</code>. An <code>input</code> event listener checks character count and runs <code>extractSubQuestions(text)</code>.</li>
+      <li>If sub-questions like <code>(a) Explain ACID [3]</code> and <code>(b) Draw B+ Tree [3]</code> are detected, the question's total mark field is automatically locked and updated to <code>6</code> ($3+3$).</li>
+      <li>User submits the form via button or <code>Ctrl + Enter</code>.</li>
+      <li><code>handleAddQuestion()</code> validates that question text is not empty and MCQ options have at least 2 choices with a selected correct answer.</li>
+      <li>The new question object is appended to <code>state.questions</code> and synced to <code>state.sets[state.activeSetIndex]</code>.</li>
+      <li><code>saveState()</code> and <code>render()</code> execute. The newly created question animates onto the paper with a highlight pulse.</li>
+    </ol>
+
+    <div class="page-break"></div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 4: ALGORITHMIC FORMULATIONS                                     -->
+    <!-- ======================================================================= -->
+    <h1>4. Core Algorithmic Formulations &amp; Mathematical Engine</h1>
+
+    <h2>1. The Fisher–Yates Shuffling Algorithm</h2>
+    <p>
+      For generating multiple anti-cheating exam sets, simple random sorting (like <code>arr.sort(() => Math.random() - 0.5)</code>) produces biased non-uniform permutations. ExamStudio implements the rigorous <strong>Fisher–Yates (Knuth) Shuffle</strong> algorithm:
+    </p>
+    <pre><code>function shuffleList(list) {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]]; // In-place swap
+  }
+  return arr;
+}</code></pre>
+    <div class="callout success">
+      <div class="callout-title">Mathematical Properties of Fisher–Yates</div>
+      <ul>
+        <li><strong>Time Complexity:</strong> $\mathcal{O}(N)$ — linear time, visits each element exactly once.</li>
+        <li><strong>Space Complexity:</strong> $\mathcal{O}(1)$ auxiliary space.</li>
+        <li><strong>Unbiased Distribution:</strong> Every permutation of $N!$ possible question sequences has an exact and equal probability of $\frac{1}{N!}$.</li>
+        <li><strong>Independent Part Shuffling:</strong> Part A (MCQs) and Part B (Written) are shuffled separately so that section division is preserved.</li>
+      </ul>
+    </div>
+
+    <h2>2. KaTeX Mathematical Parsing &amp; Sanitization Engine</h2>
+    <p>
+      To allow math formulas like $\int_0^\infty e^{-x} dx$ alongside plain English and Bengali text without breaking the HTML parser, ExamStudio uses a specialized regular expression:
+    </p>
+    <pre><code>const MATH_RE = /\$\$([\s\S]+?)\$\$|\$(?!\s)([^$\n]+?)(?<!\s)\$(?!\d)/g;</code></pre>
+    <p><strong>Regex Breakdown:</strong></p>
+    <ul>
+      <li><code>\$\$([\s\S]+?)\$\$</code>: Matches block display math wrapped in double dollars <code>$$...$$</code>.</li>
+      <li><code>\$(?!\s)([^$\n]+?)(?<!\s)\$(?!\d)</code>: Matches inline math wrapped in single dollars <code>$...$</code>.
+        <ul>
+          <li><code>(?!\s)</code> ensures the opening dollar is not followed by a space.</li>
+          <li><code>(?&lt;!\s)</code> ensures the closing dollar is not preceded by a space.</li>
+          <li><code>(?!\d)</code> ensures currency amounts like <code>$500 and $300</code> are NOT mistakenly parsed as math!</li>
+          <li>Literal dollar signs can be escaped as <code>\$</code>.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>3. SVG Circular Progress Ring Mathematics</h2>
+    <p>
+      The dashboard displays a dynamic circular progress ring showing current marks vs. target marks. The SVG circle has a radius of $r = 42\text{px}$.
+    </p>
+    <div class="diagram">
+Circumference (C) = 2 * π * r = 2 * 3.14159 * 42 = 263.8938 px
+
+strokeDasharray  = 263.89
+strokeDashoffset = C * (1 - min(1, totalMarks / targetMarks))
+
+• If total = 0:    offset = 263.89 * (1 - 0) = 263.89 (Circle completely empty)
+• If total = 15/30: offset = 263.89 * (1 - 0.5) = 131.94 (Circle 50% filled)
+• If total = 30/30: offset = 263.89 * (1 - 1.0) = 0.00   (Circle 100% full)
+    </div>
+
+    <h2>4. Exam Time Estimation Formula</h2>
+    <p>
+      Based on psychometric examination benchmarks (1.5 minutes per objective mark, 2.5 minutes per analytical written mark):
+    </p>
+    <pre><code>Total Estimated Minutes = Math.ceil(
+  Σ (MCQ_Marks × 1.5) + Σ (Written_Marks × 2.5)
+);</code></pre>
+
+    <div class="page-break"></div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 5: FILE-BY-FILE ARCHITECTURE                                    -->
+    <!-- ======================================================================= -->
+    <h1>5. Deep-Dive File Breakdown (Line-by-Line Architecture)</h1>
+
+    <h2>1. `index.html` (Application Skeleton &amp; Semantic Markup)</h2>
+    <ul>
+      <li><strong>Header Toolbar (<code>.topbar</code>):</strong> Hosts paper health chips, total marks badge, student/key view switcher, <code>#btnMultiSets</code>, <code>#btnShuffleSet</code>, and the master <code>#btnPrint</code> button.</li>
+      <li><strong>Left Sidebar (<code>#studioPanel</code>):</strong> Hosts the circular paper health card, difficulty balance bar, 3-tab navigation (Add Question, Exam Details, Paper Outline), and form inputs.</li>
+      <li><strong>Add Question Form (<code>#addQuestionForm</code>):</strong> Radio buttons for question type (MCQ vs. Written), interactive marks stepper, difficulty selector, live preview box, and sub-question builder rows.</li>
+      <li><strong>Right Live Canvas (<code>.canvas</code>):</strong> Displays the simulated A4 page (794px × 1123px standard A4 ratio) with institution emblem, crest, double-rule metadata table, Part A/B lists, and confidential watermark.</li>
+      <li><strong>Multi-Set Modal Dialog (<code>#modalMultiSets</code>):</strong> Houses set count selector chips (2, 3, 4, custom), shuffle checkboxes, generated set cards grid, and batch print controls.</li>
+      <li><strong>Equation Editor Modal (<code>#eqOverlay</code>):</strong> Visual math keyboard palette powered by MathLive.</li>
+      <li><strong>Batch Print Container (<code>#batchPrintContainer</code>):</strong> Hidden off-screen container that dynamically renders all sets during batch multi-page PDF generation.</li>
+    </ul>
+
+    <h2>2. `app.js` (Core Application Engine)</h2>
+    <ul>
+      <li><strong>Lines 18–44:</strong> Constants (<code>STORAGE_KEY</code>, <code>RING_CIRCUMFERENCE</code>, <code>LETTERS</code>, <code>ICON</code> SVGs) and global state declaration.</li>
+      <li><strong>Lines 48–100:</strong> App initialization (<code>initApp()</code>), state loading, migration, and persistence (<code>loadState()</code>, <code>saveState()</code>).</li>
+      <li><strong>Lines 124–295:</strong> Event binding, marks stepper listeners, live preview updates, and answer space adjustment handlers.</li>
+      <li><strong>Lines 314–486:</strong> Sub-question builder row manipulation (<code>addSubQuestionRow()</code>, <code>syncSubMarksSum()</code>, <code>extractSubQuestions()</code>).</li>
+      <li><strong>Lines 502–522:</strong> View modes (<code>setView()</code>) and zoom controls (<code>setZoom()</code>).</li>
+      <li><strong>Lines 527–650:</strong> CRUD operations: <code>handleAddQuestion()</code>, <code>deleteQuestion()</code> (with animated Undo toast), and <code>moveQuestion()</code>.</li>
+      <li><strong>Lines 652–750:</strong> Classical set shuffler and state reset handlers (<code>loadDemo()</code>, <code>clearAll()</code>).</li>
+      <li><strong>Lines 755–810:</strong> Diagnostic engine (<code>updateDiagnostics()</code>): calculates total marks, part splits, difficulty percentages, and health verdicts.</li>
+      <li><strong>Lines 813–977:</strong> Preview rendering: <code>renderPaperPreview()</code> and <code>questionHTML()</code>. Generates HTML for MCQs, sub-questions, answer spaces, and solution rubrics.</li>
+      <li><strong>Lines 1094–1400:</strong> <strong>Multi-Set Architecture</strong>: <code>generateMultipleSets()</code>, <code>selectSet()</code>, <code>renderSetSwitcher()</code>, <code>renderGeneratedSetsList()</code>, <code>printSingleSet()</code>, <code>printAllSets()</code>, and <code>downloadSetHtml()</code>.</li>
+      <li><strong>Lines 1400–1540:</strong> Equation editor integration and KaTeX text tokenizer (<code>richText()</code>).</li>
+    </ul>
+
+    <h2>3. `style.css` (Design System &amp; Print Engine)</h2>
+    <ul>
+      <li><strong>CSS Variables (<code>:root</code>):</strong> Surface colors, typography tokens, status tints, shadows, and radii.</li>
+      <li><strong>Split-Screen Layout:</strong> CSS Grid partitioning the screen into a 420px studio sidebar and a flexible, zoomable preview canvas.</li>
+      <li><strong>A4 Sheet Simulation:</strong> Precise dimensions (<code>width: 794px; min-height: 1123px</code>) with box-shadow elevation and paper background.</li>
+      <li><strong>Print Stylesheet (<code>@media print</code>):</strong>
+        <ul>
+          <li>Sets <code>@page { size: A4; margin: 14mm; }</code>.</li>
+          <li>Completely hides toolbars, sidebars, modal overlays, toasts, and screen-only controls (<code>display: none !important</code>).</li>
+          <li>Applies <code>break-inside: avoid</code> on individual questions to prevent awkward page splits.</li>
+          <li>Applies <code>page-break-after: always; break-after: page;</code> for batch multi-set booklet printing.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 6: SPECIFIC FEATURE BREAKDOWN                                   -->
+    <!-- ======================================================================= -->
+    <h1>6. Specific Feature Breakdown</h1>
+
+    <h2>Feature A: Unruled Handwriting Answer Space (Class Test Mode)</h2>
+    <p>
+      Unlike standard exams where students write in separate script booklets, class tests and quizzes require students to write directly on the question paper.
+    </p>
+    <ul>
+      <li><strong>Marks-Proportional Height:</strong> <code>calcDefaultAnswerSpace(marks)</code> assigns height based on:
+        $$\text{Height (px)} = \min(360, \max(70, \text{marks} \times 22))$$
+      </li>
+      <li><strong>On-Paper Sizing Steppers:</strong> Each question displays floating <code>[−]</code> and <code>[+]</code> buttons that allow expanding (+25px) or shrinking (−25px) the space dynamically.</li>
+      <li><strong>Formatting Styles:</strong>
+        <ol>
+          <li><code>box</code>: Clean border box with subtle background tint.</li>
+          <li><code>underline</code>: Minimalist baseline underline preserving open whitespace.</li>
+          <li><code>dotted</code>: Dotted frame outlining the response perimeter.</li>
+        </ol>
+      </li>
+      <li><strong>Automatic Key Replacement:</strong> When switching to Teacher Answer Key view, all answer spaces disappear and are seamlessly replaced by the model answer and rubric box.</li>
+    </ul>
+
+    <h2>Feature B: Sub-Questions Breakdown (`(a) [3] + (b) [3] = [6]`)</h2>
+    <p>
+      University exams frequently divide questions into sub-parts. ExamStudio supports two distinct workflows:
+    </p>
+    <ul>
+      <li><strong>Visual Row Builder:</strong> Dynamic rows with prefix labels <code>(a)</code>, <code>(b)</code>, individual prompts, and marks steppers. The total mark automatically syncs with the sum.</li>
+      <li><strong>Smart Parser Regex:</strong> If a teacher types directly into the prompt:
+        <pre><code>State the ACID properties [3]. Discuss atomicity in detail [3].</code></pre>
+        The regular expression <code>/^\(([a-zA-Z0-9]+)\)\s*(.*?)(?:\s*\[(\d+)\])?$/</code> extracts the sub-parts and brackets automatically.
+      </li>
+    </ul>
+
+    <h2>Feature C: Multi-Set Anti-Cheating Generator</h2>
+    <div class="diagram">
++---------------------+
+| Master Questions    |
+| (Set A Source)      |
++---------------------+
+           │
+           ├───────────────────────────────┬───────────────────────────────┐
+           ▼                               ▼                               ▼
+    +─────────────+                 +─────────────+                 +─────────────+
+    |    SET A    |                 |    SET B    |                 |    SET C    |
+    +─────────────+                 +─────────────+                 +─────────────+
+    | • Master Qs |                 | • Shuffled  |                 | • Shuffled  |
+    | • Part A/B  |                 |   Part A    |                 |   Part A    |
+    |   Original  |                 | • Shuffled  |                 | • Shuffled  |
+    |             |                 |   Part B    |                 |   Part B    |
+    |             |                 | • Shuffled  |                 | • Shuffled  |
+    |             |                 |   Options   |                 |   Options   |
+    +─────────────+                 +─────────────+                 +─────────────+
+           │                               │                               │
+           ▼                               ▼                               ▼
+    [ Print PDF ]                   [ Print PDF ]                   [ Print PDF ]
+    [ Download ]                    [ Download ]                    [ Download ]
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 7: 25+ TEACHER VIVA QUESTIONS & WINNING ANSWERS                -->
+    <!-- ======================================================================= -->
+    <h1>7. 25+ Teacher Viva Questions &amp; Winning Model Answers</h1>
+    <p>
+      Review these questions thoroughly. They represent the exact technical, conceptual, and architectural questions faculty members ask during project defense:
+    </p>
+
+    <!-- Q1 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q1</span> What is the motivation behind this project? Why not just use Microsoft Word?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Microsoft Word is a generic text editor with no awareness of exam structures or pedagogical constraints. Word cannot automatically sum question marks against a target, cannot estimate student completion time based on mark difficulty, does not provide one-click answer key generation, cannot render mathematical formulas with KaTeX speed, and cannot automatically generate multiple randomized anti-cheating sets using the Fisher-Yates algorithm. ExamStudio is purpose-built software with real-time reactive diagnostics specifically engineered for examination design.
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q2</span> Why did you build this in Vanilla JavaScript instead of React or Vue?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Choosing Vanilla ES6+ was a deliberate architectural decision to achieve zero build overhead, instantaneous loading, and lightweight execution without thousands of <code>node_modules</code>. By using native modern DOM APIs (<code>document.getElementById</code>, <code>querySelectorAll</code>, template literals, and event delegation), the application achieves sub-10ms render latency. It demonstrates mastery of core JavaScript fundamentals, DOM lifecycle, and reactive state management without hiding behind framework abstractions.
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q3</span> How does the application prevent neighboring students from cheating in an exam hall?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Through the <strong>Multi-Set Generator</strong>. Teachers can specify any number of sets (e.g. 4 sets: A, B, C, D). The system utilizes the <strong>Fisher–Yates algorithm</strong> to shuffle Part A (MCQ) questions and Part B (Written) questions independently. Additionally, it can randomize the order of answer choices <code>(a)</code>, <code>(b)</code>, <code>(c)</code>, <code>(d)</code> within every MCQ while strictly preserving the correct answer key linkage. Neighboring students have questions and options in completely different sequences.
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q4</span> How does the shuffle algorithm work, and what is its time complexity?</div>
+      <div class="qa-a">
+        <b>Answer:</b> We implemented the <strong>Fisher–Yates (Knuth) shuffle</strong>. It runs in $\mathcal{O}(N)$ time complexity and $\mathcal{O}(1)$ auxiliary space. It iterates from the last index down to 1, picking an unbiased random integer between 0 and the current index, and swaps elements in place. This guarantees that all $N!$ permutations have an equal mathematical probability of $\frac{1}{N!}$, unlike naive random sorts which suffer from severe statistical bias.
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q5</span> If MCQ options are shuffled, how does the Teacher Answer Key still know which option is correct?</div>
+      <div class="qa-a">
+        <b>Answer:</b> In our data model, the question object stores the correct answer by its <em>text value</em> (e.g., <code>answer: "Selection (σ)"</code>), rather than by an index or letter like <code>"A"</code>. When the options array <code>["Selection (σ)", "Projection (π)", ...]</code> is shuffled into a new permutation, the rendering engine checks <code>opt === q.answer</code>. Thus, whichever letter position the correct option lands on is accurately highlighted with a green checkmark in the Answer Key mode.
+      </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q6</span> How do you handle mathematical equations, and why use KaTeX over MathJax?</div>
+      <div class="qa-a">
+        <b>Answer:</b> We use <strong>MathLive</strong> for visual, interactive equation input and <strong>KaTeX</strong> for rendering. KaTeX renders math synchronously directly into HTML markup using pure CSS fonts without needing a heavy asynchronous JavaScript typesetting engine. KaTeX is over 20 times faster than MathJax, which is essential for our real-time auto-sync preview where the paper re-renders on every keystroke.
+      </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q7</span> How does the application support Bengali (বাংলা) font rendering without breaking?</div>
+      <div class="qa-a">
+        <b>Answer:</b> We imported <code>Noto Serif Bengali</code> and <code>Hind Siliguri</code> via Google Fonts and integrated them into our CSS typography stack: <code>--font-paper: 'Crimson Pro', 'Noto Serif Bengali', Georgia, serif;</code>. CSS font fallback handles mixed scripts automatically: English glyphs use Crimson Pro while Unicode Bengali characters fallback gracefully to Noto Serif Bengali, preserving ligatures, marks, and complex matras.
+      </div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q8</span> How does the dynamic answer space feature work for Class Tests and Quizzes?</div>
+      <div class="qa-a">
+        <b>Answer:</b> When the teacher enables <em>Answer Space Mode</em>, the preview engine attaches unruled blank response boxes under written questions. The default height is computed proportionally based on marks using <code>calcDefaultAnswerSpace(marks)</code>. Teachers can click floating <code>[+]</code> and <code>[−]</code> buttons on each question to add or reduce height by 25px steps. Three format styles (Clean Border Box, Open Underline, Dotted Frame) are supported via CSS class switches.
+      </div>
+    </div>
+
+    <!-- Q9 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q9</span> How is sub-question mark breakdown enforced? (e.g., `3 + 3 = 6`)</div>
+      <div class="qa-a">
+        <b>Answer:</b> We implemented two mechanisms: a visual sub-question row builder and a smart text extractor. In both, the function <code>syncSubMarksSum()</code> calculates the sum of all sub-parts via <code>reduce()</code>. If sub-parts are present, the master question's total mark is locked and synchronized to this sum, completely eliminating arithmetic mark mismatches.
+      </div>
+    </div>
+
+    <!-- Q10 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q10</span> How does printing to PDF work, and how do you ensure toolbars don't show up on paper?</div>
+      <div class="qa-a">
+        <b>Answer:</b> We use a dedicated CSS print stylesheet defined via <code>@media print</code>. All studio controls, sidebars, modal overlays, toasts, and hover action buttons have <code>display: none !important</code>. The <code>.paper</code> container is sized to standard A4 dimensions with <code>box-shadow: none</code> and zero margins. When <code>window.print()</code> is triggered, the browser's native print engine converts the DOM directly into high-resolution vector PDF.
+      </div>
+    </div>
+
+    <!-- Q11 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q11</span> How does batch printing of all 4 sets work in one go?</div>
+      <div class="qa-a">
+        <b>Answer:</b> When the user clicks <em>"Print All (Combined PDF)"</em>, the application renders all generated sets into an off-screen container <code>#batchPrintContainer</code> using <code>generateSinglePaperHtml()</code>. We set <code>document.body.dataset.printMode = 'batch'</code>. In CSS, <code>.batch-set-paper</code> is assigned <code>page-break-after: always; break-after: page;</code>, which instructs the PDF engine to start each exam set on a fresh physical page.
+      </div>
+    </div>
+
+    <!-- Q12 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q12</span> How do you persist user data if the browser refreshes or crashes?</div>
+      <div class="qa-a">
+        <b>Answer:</b> State is persisted to HTML5 <code>localStorage</code> under the key <code>examStudio_state_v2</code> serialized as JSON. Every state mutation (adding/editing questions, resizing answer space, switching sets) invokes <code>saveState()</code>, ensuring complete resilience against accidental tab closures.
+      </div>
+    </div>
+
+    <!-- Q13 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q13</span> What is Event Delegation and where do you use it in this project?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Event Delegation is an efficient pattern where a single event listener is attached to a common ancestor rather than hundreds of listeners on dynamic child nodes. In <code>app.js</code>, question tools (move up/down, delete, resize space) are handled by a single listener on <code>document</code> using <code>e.target.closest('[data-action]')</code>. This avoids memory leaks and ensures newly created questions automatically have working buttons without rebinding.
+      </div>
+    </div>
+
+    <!-- Q14 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q14</span> How does the SVG circular progress ring animate smoothly?</div>
+      <div class="qa-a">
+        <b>Answer:</b> The SVG circle uses <code>stroke-dasharray</code> set to its circumference $2\pi r = 263.89\text{px}$. By setting <code>stroke-dashoffset</code> proportional to $(1 - \frac{\text{current}}{\text{target}})$, we control how much of the ring is stroked. CSS transition <code>transition: stroke-dashoffset 0.4s ease</code> delivers a fluid, hardware-accelerated filling animation.
+      </div>
+    </div>
+
+    <!-- Q15 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q15</span> How did you implement Undo functionality when deleting a question?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Instead of disruptive modal confirmation popups, <code>deleteQuestion()</code> removes the question from <code>state.questions</code> and immediately displays an interactive toast notification with an <em>"Undo"</em> button. If the user clicks Undo within 5 seconds, the saved question object is spliced back into its original index in <code>state.questions</code> and the paper re-renders.
+      </div>
+    </div>
+
+    <!-- Q16 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q16</span> What security and XSS protection measures did you implement?</div>
+      <div class="qa-a">
+        <b>Answer:</b> All user-provided strings (course names, institute titles, question prompts) pass through an <code>escapeHtml()</code> utility that converts <code>&amp;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>"</code>, and <code>'</code> into their respective HTML entities before DOM insertion, preventing Cross-Site Scripting (XSS) injection.
+      </div>
+    </div>
+
+    <!-- Q17 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q17</span> How does the exam time estimator calculate duration?</div>
+      <div class="qa-a">
+        <b>Answer:</b> We apply psychometric multipliers: 1.5 minutes per objective mark (MCQ) and 2.5 minutes per descriptive mark (Written), summed via <code>reduce()</code>:
+        $\text{Total Minutes} = \lceil \sum (\text{MCQ} \times 1.5) + \sum (\text{Written} \times 2.5) \rceil$.
+      </div>
+    </div>
+
+    <!-- Q18 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q18</span> What happens if a teacher enters dollar signs for currency ($500)? Does KaTeX break?</div>
+      <div class="qa-a">
+        <b>Answer:</b> No. Our mathematical regular expression includes negative lookaheads: <code>\$(?!\s)([^$\n]+?)(?<!\s)\$(?!\d)</code>. The <code>(?!\d)</code> ensures that any dollar sign immediately followed by a digit (like <code>$500</code>) is treated as currency text rather than an opening LaTeX math delimiter.
+      </div>
+    </div>
+
+    <!-- Q19 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q19</span> Why did you build a custom Node.js server instead of using Express?</div>
+      <div class="qa-a">
+        <b>Answer:</b> To keep the project 100% self-contained and dependency-free. Using Node's native <code>http</code>, <code>fs</code>, and <code>path</code> modules, we implemented file streaming and MIME-type routing in under 40 lines of code. Any computer with standard Node.js can run it instantly without running <code>npm install</code>.
+      </div>
+    </div>
+
+    <!-- Q20 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q20</span> How are questions ordered and moved between sections?</div>
+      <div class="qa-a">
+        <b>Answer:</b> The function <code>moveQuestion(id, direction)</code> filters questions belonging strictly to the same part (MCQ vs Written) to obtain their group indices, and swaps positions in <code>state.questions</code>. This ensures MCQs never accidentally migrate into the Written section or vice-versa.
+      </div>
+    </div>
+
+    <!-- Q21 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q21</span> What is the role of `data-key` attributes on HTML input elements?</div>
+      <div class="qa-a">
+        <b>Answer:</b> <code>data-key</code> creates a generic two-way data-binding mechanism between the DOM and <code>state.config</code>. When an input fires, a single loop reads <code>el.dataset.key</code>, updates the corresponding state property, and calls <code>render()</code>, eliminating boilerplate code for dozens of input fields.
+      </div>
+    </div>
+
+    <!-- Q22 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q22</span> Can this project be used offline without an internet connection?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Yes. The local Node server serves all application logic offline. Furthermore, each generated set can be exported as a standalone <code>.html</code> file via our <em>"Download HTML"</em> feature, allowing any teacher to open and print their exam paper on any machine without internet or server access.
+      </div>
+    </div>
+
+    <!-- Q23 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q23</span> What are the difficulty balance tiers, and how are they visualized?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Every question is tagged as Easy, Medium, or Hard. The diagnostic engine aggregates marks per tier via <code>reduce()</code> and calculates their percentage share. A color-coded 3-segment bar (Green, Yellow, Red) provides instant visual feedback on whether the paper is well-balanced or skewed too hard/easy.
+      </div>
+    </div>
+
+    <!-- Q24 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q24</span> How does the application avoid page overflow during printing?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Through CSS page-break properties: <code>.q-item { break-inside: avoid; }</code> prevents a question from being sliced in half across a page boundary. Section headers use <code>break-after: avoid</code> to prevent orphaned headings at the bottom of a page.
+      </div>
+    </div>
+
+    <!-- Q25 -->
+    <div class="qa-box">
+      <div class="qa-q"><span class="q-badge">Q25</span> What are the future enhancements you would add to ExamStudio?</div>
+      <div class="qa-a">
+        <b>Answer:</b> Future enhancements include: (1) AI-powered question generation from syllabus text files, (2) OCR scanning to digitize paper questions from textbooks, (3) Cloud database integration (MongoDB/PostgreSQL) with user authentication for department-wide question bank sharing, and (4) Automated bubble-sheet (OMR) generator for Part A MCQ automated grading.
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 8: CONCLUSION                                                   -->
+    <!-- ======================================================================= -->
+    <h1>8. Conclusion &amp; Defense Summary</h1>
+    <p>
+      ExamStudio demonstrates a production-grade, highly cohesive software system built on sound computer science principles:
+    </p>
+    <ul>
+      <li><strong>Algorithmic Integrity:</strong> Unbiased $\mathcal{O}(N)$ Fisher–Yates shuffling for anti-cheating exam security.</li>
+      <li><strong>Engineering Discipline:</strong> Zero-dependency architecture, strict separation of concerns, single source of truth, and event delegation.</li>
+      <li><strong>Human-Centered UI/UX:</strong> Dual-typography design, instant A4 visual feedback, dynamic handwriting answer spaces, and full bilingual (English &amp; Bengali) support.</li>
+    </ul>
+
+    <div class="callout success" style="margin-top: 24px;">
+      <div class="callout-title">Defense Readiness Affirmation</div>
+      You are now equipped with full architectural, algorithmic, and code-level comprehension of the entire ExamStudio project. Walk into your defense with confidence!
+    </div>
+
+  </div>
+
+</body>
+</html>

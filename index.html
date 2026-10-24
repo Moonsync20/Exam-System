@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Smart Exam Question Paper & Answer-Key Studio — compose, balance, and print university-standard exam papers and teacher answer keys with a live A4 preview.">
+  <meta name="theme-color" content="#0f172a">
+  <title>ExamStudio — Smart Question Paper & Answer-Key Studio</title>
+
+  <!-- Fonts: UI sans-serif + academic serif for the paper -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Noto+Serif+Bengali:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- KaTeX: renders LaTeX math written between $…$ (inline) or $$…$$ (block) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+  <!-- MathLive: visual (WYSIWYG) math input used inside the equation editor -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mathlive@0.101.0/dist/mathlive.min.js"></script>
+
+  <!-- Tailwind CSS (CDN). Preflight is disabled so the custom design system in style.css stays in control. -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { corePlugins: { preflight: false } };
+  </script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-view="student" data-marks="under">
+<div class="app">
+
+  <!-- ===================================================================== -->
+  <!-- TOP BAR                                                               -->
+  <!-- ===================================================================== -->
+  <header class="topbar print:hidden" id="topBar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+      </div>
+      <div>
+        <h1 class="brand-name">ExamStudio</h1>
+        <p class="brand-sub">Question Paper &amp; Answer-Key Studio</p>
+      </div>
+    </div>
+
+    <div class="top-stats" aria-label="Live paper diagnostics">
+      <div class="top-stat">
+        <span>Marks</span>
+        <strong><span id="topMarks">0</span> / <span id="topTarget">30</span></strong>
+        <div class="top-progress"><div id="topProgressBar" style="width:0%"></div></div>
+        <span class="status-chip" id="topStatusChip">—</span>
+      </div>
+      <span class="top-divider"></span>
+      <div class="top-stat" title="1.5 min per MCQ mark + 2.5 min per written mark">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span>Est.</span><strong id="topTime">0 min</strong>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="seg" role="group" aria-label="Paper view mode">
+        <button class="seg-btn is-active" id="viewStudentBtn" type="button" aria-pressed="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="btn-label">Student</span>
+        </button>
+        <button class="seg-btn" id="viewKeyBtn" type="button" aria-pressed="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+          <span class="btn-label">Answer Key</span>
+        </button>
+      </div>
+
+      <button class="btn btn-dark" id="btnMultiSets" type="button" title="Generate multiple randomized sets for anti-cheating (e.g. Set A, B, C, D)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="15" rx="2"/><path d="M6 3h12a2 2 0 0 1 2 2v12"/></svg>
+        <span class="btn-label">Multi-Sets</span>
+        <span class="btn-chip" id="topMultiSetChip" style="display:none">4 Sets</span>
+      </button>
+
+      <button class="btn btn-dark" id="btnShuffleSet" type="button" title="Shuffle question order and switch Set A ↔ Set B">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>
+        <span class="btn-label">Shuffle</span>
+        <span class="btn-chip" id="topSetChip">A</span>
+      </button>
+
+      <button class="btn btn-primary" id="btnPrint" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+        <span class="btn-label">Print / PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="workspace">
+
+    <!-- =================================================================== -->
+    <!-- LEFT: STUDIO PANEL                                                  -->
+    <!-- =================================================================== -->
+    <aside class="sidebar print:hidden" id="studioPanel">
+
+      <!-- Paper health dashboard -->
+      <section class="card" aria-labelledby="healthTitle">
+        <div class="health">
+          <div class="ring" aria-hidden="true">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-track" cx="50" cy="50" r="42"/>
+              <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="42" stroke-dasharray="263.89" stroke-dashoffset="263.89"/>
+            </svg>
+            <div class="ring-label">
+              <span class="ring-value" id="ringValue">0</span>
+              <span class="ring-sub">of <span id="ringTarget">30</span></span>
+            </div>
+          </div>
+
+          <div>
+            <p class="eyebrow" id="healthTitle">Paper health</p>
+            <p class="health-headline" id="healthHeadline">Calculating…</p>
+            <div class="health-stats">
+              <div class="stat"><span class="stat-num" id="statQuestions">0</span><span class="stat-label">Questions</span></div>
+              <div class="stat"><span class="stat-num" id="statTime">0m</span><span class="stat-label">Duration</span></div>
+              <div class="stat"><span class="stat-num" id="statSplit">0/0</span><span class="stat-label">Part A / B</span></div>
+            </div>
+          </div>
+
+          <div class="diff-block">
+            <div class="flex items-center justify-between">
+              <p class="eyebrow">Difficulty balance</p>
+              <span class="verdict muted" id="balanceVerdict">—</span>
+            </div>
+            <div class="diff-bar" aria-hidden="true">
+              <div class="bg-easy" id="barEasy"></div>
+              <div class="bg-medium" id="barMedium"></div>
+              <div class="bg-hard" id="barHard"></div>
+            </div>
+            <div class="diff-legend">
+              <span><i class="dot bg-easy"></i>Easy <b id="pctEasy">0%</b></span>
+              <span><i class="dot bg-medium"></i>Medium <b id="pctMedium">0%</b></span>
+              <span><i class="dot bg-hard"></i>Hard <b id="pctHard">0%</b></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabs -->
+      <nav class="tabs" role="tablist" aria-label="Studio sections">
+        <button class="tab is-active" id="tabBuilder" role="tab" aria-selected="true" aria-controls="panelBuilder" data-tab="builder" type="button">Add Question</button>
+        <button class="tab" id="tabHeader" role="tab" aria-selected="false" aria-controls="panelHeader" data-tab="header" type="button">Exam Details</button>
+        <button class="tab" id="tabOutline" role="tab" aria-selected="false" aria-controls="panelOutline" data-tab="outline" type="button">Outline <span class="tab-count" id="outlineCount">0</span></button>
+      </nav>
+
+      <!-- TAB: Add question -->
+      <section class="tab-panel" id="panelBuilder" role="tabpanel" aria-labelledby="tabBuilder">
+        <form class="card form-stack" id="addQuestionForm" novalidate>
+
+          <div>
+            <p class="field-label">Question type</p>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="choice">
+                <input type="radio" name="qType" value="mcq" id="typeMcq" checked>
+                <span class="type-card">
+                  <span class="type-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg></span>
+                  <span class="type-name">MCQ</span>
+                  <span class="type-meta">Part A · Objective</span>
+                </span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="qType" value="written" id="typeWritten">
+                <span class="type-card">
+                  <span class="type-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+                  <span class="type-name">Written</span>
+                  <span class="type-meta">Part B · Descriptive</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <div>
+              <label class="field-label" for="inputMarks">Marks</label>
+              <div class="stepper">
+                <button type="button" id="marksDec" aria-label="Decrease marks"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                <input type="number" id="inputMarks" min="1" max="50" value="2" inputmode="numeric">
+                <button type="button" id="marksInc" aria-label="Increase marks"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+            </div>
+            <div class="flex-1">
+              <p class="field-label">Difficulty</p>
+              <div class="diff-options">
+                <label class="choice"><input type="radio" name="difficulty" value="easy" id="diffEasy"><span class="diff-pill easy"><i class="dot bg-easy"></i>Easy</span></label>
+                <label class="choice"><input type="radio" name="difficulty" value="medium" id="diffMedium" checked><span class="diff-pill medium"><i class="dot bg-medium"></i>Medium</span></label>
+                <label class="choice"><input type="radio" name="difficulty" value="hard" id="diffHard"><span class="diff-pill hard"><i class="dot bg-hard"></i>Hard</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label" for="inputQuestionText">Question <span class="field-hint" id="qCharCount">0 chars</span></label>
+
+            <!-- Equation editor launcher: inserts into the last-focused field -->
+            <div class="math-bar">
+              <button type="button" class="eq-open-btn" id="btnOpenEq" title="Insert an equation into the field you clicked last (Ctrl+M)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7V4H6l6 8-6 8h12v-3"/></svg>
+                Equation editor
+              </button>
+              <span class="math-bar-hint"><kbd>Ctrl</kbd>+<kbd>M</kbd> &nbsp;or type <code>$ … $</code></span>
+            </div>
+
+            <textarea class="input" id="inputQuestionText" rows="3" placeholder="Type in English or বাংলা. e.g. সমাধান কর: $x^2 - 5x + 6 = 0$"></textarea>
+
+            <div class="q-preview is-hidden" id="qPreview" aria-live="polite">
+              <span class="eyebrow">Preview</span>
+              <div id="qPreviewBody"></div>
+            </div>
+          </div>
+
+          <div class="collapsible" id="mcqOptionsBlock">
+            <div class="collapsible-inner">
+              <p class="field-label">Answer options <span class="field-hint">Click a letter to mark the correct one</span></p>
+              <div class="option-list">
+                <div class="option-row">
+                  <label class="option-letter" title="Mark (a) as correct"><input type="radio" name="correctOption" value="0" checked><span>a</span></label>
+                  <input class="input" type="text" id="opt0" placeholder="Option A">
+                </div>
+                <div class="option-row">
+                  <label class="option-letter" title="Mark (b) as correct"><input type="radio" name="correctOption" value="1"><span>b</span></label>
+                  <input class="input" type="text" id="opt1" placeholder="Option B">
+                </div>
+                <div class="option-row">
+                  <label class="option-letter" title="Mark (c) as correct"><input type="radio" name="correctOption" value="2"><span>c</span></label>
+                  <input class="input" type="text" id="opt2" placeholder="Option C">
+                </div>
+                <div class="option-row">
+                  <label class="option-letter" title="Mark (d) as correct"><input type="radio" name="correctOption" value="3"><span>d</span></label>
+                  <input class="input" type="text" id="opt3" placeholder="Option D">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-questions breakdown for Written questions -->
+          <div class="collapsible is-collapsed" id="subQuestionsBlock">
+            <div class="collapsible-inner">
+              <div class="flex items-center justify-between mb-2">
+                <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none">
+                  <input type="checkbox" id="chkEnableSubQ" class="w-4 h-4 text-indigo-600 rounded border-slate-300">
+                  <span>Split into Sub-questions (a, b)</span>
+                </label>
+                <span class="text-xs text-slate-500" id="subQTotalMarksBadge">Sub-marks: <b id="subMarksSum">0</b></span>
+              </div>
+
+              <div id="subQContainer" class="is-hidden flex flex-col gap-2 mt-2">
+                <div id="subQRows" class="flex flex-col gap-2">
+                  <!-- Generated sub-question rows: prefix, text, marks stepper, remove -->
+                </div>
+                <div class="flex gap-2 mt-1">
+                  <button type="button" class="btn btn-light btn-sm flex-1" id="btnAddSubQRow">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                    <span>Add Sub-part</span>
+                  </button>
+                  <button type="button" class="btn btn-light btn-sm" id="btnInsertTemplate" title="Insert (a) [3] (b) [2] template directly into text box">
+                    <span>Insert Template</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label" for="inputSolution">Model solution <span class="field-hint">Shown only in the answer key</span></label>
+            <textarea class="input" id="inputSolution" rows="2" placeholder="Key steps, explanation, or marking rubric…"></textarea>
+          </div>
+
+          <div class="form-footer">
+            <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+            <button type="submit" class="btn btn-primary btn-lg" id="btnAddQuestion">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              Add to paper
+            </button>
+          </div>
+        </form>
+
+        <div class="preset-row" style="margin-top:16px">
+          <span>Start from the sample DBMS paper, or a blank one.</span>
+          <div class="flex gap-1">
+            <button class="btn btn-light btn-sm" id="btnLoadDemo" type="button">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Demo
+            </button>
+            <button class="btn btn-danger-ghost btn-sm" id="btnClearAll" type="button">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: Exam details -->
+      <section class="tab-panel is-hidden" id="panelHeader" role="tabpanel" aria-labelledby="tabHeader">
+        <div class="card form-stack">
+          <div>
+            <h2 class="card-title">Exam details</h2>
+            <p class="card-sub">Every keystroke updates the paper instantly.</p>
+          </div>
+          <div>
+            <label class="field-label" for="cfgInstitute">Institution / department</label>
+            <input class="input" type="text" id="cfgInstitute" data-key="institute">
+          </div>
+          <div>
+            <label class="field-label" for="cfgSubInstitute">Faculty / division</label>
+            <input class="input" type="text" id="cfgSubInstitute" data-key="subInstitute">
+          </div>
+          <div>
+            <label class="field-label" for="cfgCourseTitle">Course code &amp; title</label>
+            <input class="input" type="text" id="cfgCourseTitle" data-key="courseTitle">
+          </div>
+          <div>
+            <label class="field-label" for="cfgExamTitle">Examination</label>
+            <input class="input" type="text" id="cfgExamTitle" data-key="examTitle">
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="field-label" for="cfgTargetMarks">Target marks</label>
+              <input class="input" type="number" min="1" max="300" id="cfgTargetMarks" data-key="targetMarks" data-number="true">
+            </div>
+            <div>
+              <label class="field-label" for="cfgSetCode">Set</label>
+              <input class="input" type="text" id="cfgSetCode" data-key="setCode">
+            </div>
+            <div>
+              <label class="field-label" for="cfgAcademicYear">Session</label>
+              <input class="input" type="text" id="cfgAcademicYear" data-key="academicYear">
+            </div>
+          </div>
+          <div>
+            <label class="field-label" for="cfgInstructions">Instructions to candidates</label>
+            <textarea class="input" id="cfgInstructions" rows="3" data-key="instructions"></textarea>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex flex-col gap-2">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none">
+              <input type="checkbox" id="cfgAnswerLines" data-key="showAnswerLines" data-bool="true" class="w-4 h-4 text-indigo-600 rounded border-slate-300">
+              <span>Unruled Answer Space (Class Test / Quiz Mode)</span>
+            </label>
+            <p class="field-hint">Leaves blank unruled handwriting space under written questions for students to answer directly on the paper.</p>
+            <div class="grid grid-cols-2 gap-2 mt-1">
+              <div>
+                <label class="field-label" for="cfgAnswerFormat">Space style</label>
+                <select class="input" id="cfgAnswerFormat" data-key="answerSpaceFormat">
+                  <option value="box">Clean Border Box</option>
+                  <option value="underline">Open (Underline)</option>
+                  <option value="dotted">Dotted Frame</option>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <button type="button" class="btn btn-light btn-sm w-full" id="btnResetAllSpace" title="Reset all custom answer space heights back to marks-proportional auto">
+                  Reset Heights
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: Outline -->
+      <section class="tab-panel is-hidden" id="panelOutline" role="tabpanel" aria-labelledby="tabOutline">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Paper outline</h2>
+              <p class="card-sub">Reorder questions within each part, or remove them.</p>
+            </div>
+          </div>
+          <div id="outlineList"></div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- =================================================================== -->
+    <!-- RIGHT: LIVE A4 PREVIEW                                              -->
+    <!-- =================================================================== -->
+    <section class="canvas" aria-label="Live A4 paper preview">
+      <div class="canvas-toolbar print:hidden">
+        <div class="live-indicator">
+          <span class="live-dot"></span>
+          Live A4 preview <small>· auto-synced</small>
+        </div>
+        <div class="toolbar-right">
+          <button type="button" class="btn btn-light btn-sm" id="btnToggleLines" title="Toggle student handwriting answer space (Quiz / Class Test Mode)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            <span class="btn-label">Answer Space</span>
+          </button>
+          <button type="button" class="btn btn-light btn-sm" id="btnCycleFormat" title="Cycle answer space format (Clean Box ➔ Underline ➔ Dotted Frame)">
+            <span class="text-slate-400 text-xs font-normal">Format:</span>
+            <span class="font-semibold text-xs" id="lblFormatName">Box</span>
+          </button>
+          <div class="zoom" role="group" aria-label="Zoom">
+            <button type="button" id="btnZoomOut" aria-label="Zoom out"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+            <span id="zoomLevel">100%</span>
+            <button type="button" id="btnZoomIn" aria-label="Zoom in"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+          </div>
+          <span class="mode-chip" id="modeChip">Student paper</span>
+        </div>
+      </div>
+
+      <div class="set-switcher-bar print:hidden" id="setSwitcherBar" style="display:none">
+        <div class="set-switcher-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="15" rx="2"/><path d="M6 3h12a2 2 0 0 1 2 2v12"/></svg>
+          <span>Active Set:</span>
+        </div>
+        <div class="set-pills" id="setPillsContainer"></div>
+        <div class="set-switcher-actions">
+          <button type="button" class="btn btn-light btn-xs" id="btnQuickManageSets" title="Manage all sets, print combined, or download files">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            <span>Manage / Export All Sets</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="canvas-scroll">
+        <article class="paper" id="examPaper">
+          <div class="paper-watermark" aria-hidden="true">ANSWER KEY</div>
+
+          <div class="paper-body">
+            <div class="key-stamp-wrap">
+              <span class="confidential-stamp">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Answer Key · Confidential
+              </span>
+            </div>
+
+            <header class="paper-head">
+              <svg class="paper-emblem" viewBox="0 0 48 48" fill="none" stroke="currentColor" aria-hidden="true">
+                <circle cx="24" cy="24" r="22.5" stroke-width="1.2"/>
+                <circle cx="24" cy="24" r="19" stroke-width="0.7"/>
+                <g transform="translate(12 12)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>
+                </g>
+              </svg>
+              <h2 class="paper-institute" id="paperInstitute"></h2>
+              <p class="paper-sub" id="paperSubInstitute"></p>
+              <div class="paper-ornament" aria-hidden="true">◆</div>
+              <h3 class="paper-course" id="paperCourseTitle"></h3>
+              <p class="paper-exam" id="paperExamTitle"></p>
+
+              <div class="paper-meta">
+                <div>Time: <b id="paperTime"></b></div>
+                <span class="set-box" id="paperSetCode">Set A</span>
+                <div class="right">Full Marks: <b id="paperFullMarks"></b></div>
+              </div>
+
+              <div class="candidate-box">
+                <div class="candidate-field">Name <i></i></div>
+                <div class="candidate-field">Student ID <i></i></div>
+                <div class="candidate-field">Section <i></i></div>
+              </div>
+            </header>
+
+            <div class="paper-instructions" id="paperInstructionsBox">
+              <b>Instructions:</b> <span id="paperInstructions"></span>
+            </div>
+
+            <section class="paper-section">
+              <div class="section-head">
+                <span class="section-tag">Part A</span>
+                <h4 class="section-title">Multiple Choice Questions</h4>
+                <span class="section-marks" id="partAMarks">[0 Marks]</span>
+              </div>
+              <div class="q-list" id="partAList"></div>
+            </section>
+
+            <section class="paper-section">
+              <div class="section-head">
+                <span class="section-tag">Part B</span>
+                <h4 class="section-title">Written &amp; Analytical Questions</h4>
+                <span class="section-marks" id="partBMarks">[0 Marks]</span>
+              </div>
+              <div class="q-list" id="partBList"></div>
+            </section>
+          </div>
+
+          <footer class="paper-foot">
+            <span id="paperFootLeft"></span>
+            <span class="end" id="paperFootRight">— End of Question Paper —</span>
+          </footer>
+        </article>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ======================================================================= -->
+<!-- EQUATION EDITOR (modal)                                                 -->
+<!-- ======================================================================= -->
+<div class="eq-overlay print:hidden" id="eqOverlay" aria-hidden="true">
+  <div class="eq-shell" role="dialog" aria-modal="true" aria-labelledby="eqTitle">
+    <header class="eq-head">
+      <div class="eq-head-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7V4H6l6 8-6 8h12v-3"/></svg>
+      </div>
+      <div class="flex-1">
+        <h2 class="card-title" id="eqTitle">Insert equation</h2>
+        <p class="card-sub">Into: <b id="eqTarget">Question</b> · pick a template or just type</p>
+      </div>
+      <button type="button" class="icon-btn" id="eqClose" aria-label="Close equation editor">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </header>
+
+    <nav class="eq-tabs" id="eqTabs" role="tablist" aria-label="Template groups"></nav>
+    <div class="eq-palette" id="eqPalette"></div>
+
+    <div class="eq-body">
+      <div class="eq-visual">
+        <p class="field-label">Visual editor <span class="field-hint"><kbd>/</kbd> fraction · <kbd>^</kbd> power · <kbd>_</kbd> subscript · <kbd>Tab</kbd> next box</span></p>
+        <math-field id="eqField" class="eq-field" math-virtual-keyboard-policy="manual" aria-label="Visual equation editor"></math-field>
+      </div>
+
+      <div>
+        <label class="field-label" for="eqSource">LaTeX code <span class="field-hint">Edit directly if you prefer</span></label>
+        <textarea class="input eq-source" id="eqSource" rows="2" spellcheck="false" placeholder="e.g. \frac{a}{b}"></textarea>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between" style="margin-bottom:8px">
+          <span class="eyebrow">Preview on paper</span>
+          <div class="seg-light" role="group" aria-label="Equation layout">
+            <button type="button" data-mode="inline" class="is-active">Inline</button>
+            <button type="button" data-mode="block">Own line</button>
+          </div>
+        </div>
+        <div class="eq-preview" id="eqPreview"></div>
+      </div>
+    </div>
+
+    <footer class="eq-foot">
+      <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> insert · <kbd>Esc</kbd> cancel</span>
+      <div class="flex gap-2">
+        <button type="button" class="btn btn-light" id="eqCancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="eqInsert">Insert equation</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- MULTI-SET GENERATOR & EXPORT MODAL                                      -->
+<!-- ======================================================================= -->
+<div class="modal-overlay print:hidden" id="modalMultiSets" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="dialog" aria-modal="true" aria-labelledby="multiSetsTitle">
+    <header class="modal-head">
+      <div class="modal-head-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="16" height="15" rx="2"/>
+          <path d="M6 3h12a2 2 0 0 1 2 2v12"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <h2 class="card-title" id="multiSetsTitle">Multiple Question Sets (Anti-Cheating)</h2>
+        <p class="card-sub">Generate randomized exam sets (Set A, B, C, D...) with shuffled questions and individual PDF downloads.</p>
+      </div>
+      <button type="button" class="icon-btn" id="modalMultiSetsClose" aria-label="Close dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="modal-body">
+      <!-- 1. Generator Controls -->
+      <div class="multi-set-card">
+        <div class="set-count-row">
+          <div>
+            <label class="field-label" style="font-weight:700; color:var(--text); font-size:13px;">How many sets do you want to create?</label>
+            <p class="field-hint">Each set receives an independent question order across Part A and Part B to prevent student cheating.</p>
+          </div>
+          <div class="set-count-quick-group">
+            <button type="button" class="set-count-chip" data-count="2">2 Sets (A, B)</button>
+            <button type="button" class="set-count-chip" data-count="3">3 Sets (A, B, C)</button>
+            <button type="button" class="set-count-chip is-active" data-count="4">4 Sets (A, B, C, D)</button>
+            <div class="custom-set-wrap">
+              <span class="custom-set-label">Custom:</span>
+              <input type="number" id="numSetsInput" min="2" max="8" value="4" class="input custom-set-input">
+            </div>
+          </div>
+        </div>
+
+        <div class="multi-set-options-grid">
+          <label class="set-option-item">
+            <input type="checkbox" id="chkShuffleMcqOptions" checked class="w-4 h-4 text-indigo-600 rounded">
+            <span>
+              <strong>Shuffle MCQ answer options</strong>
+              <small class="block text-slate-500">Randomize (a), (b), (c), (d) option positions while preserving correct answer key match</small>
+            </span>
+          </label>
+          <label class="set-option-item">
+            <input type="checkbox" id="chkKeepSetAOriginal" checked class="w-4 h-4 text-indigo-600 rounded">
+            <span>
+              <strong>Keep Set A as original master</strong>
+              <small class="block text-slate-500">Leave Set A in original authoring sequence, only shuffle Set B, C, D...</small>
+            </span>
+          </label>
+        </div>
+
+        <div class="multi-set-action-bar">
+          <button type="button" class="btn btn-primary" id="btnDoGenerateSets">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><polyline points="9 11 12 14 22 4"/></svg>
+            <span>⚡ Generate &amp; Prepare All Sets</span>
+          </button>
+          <span class="field-hint" id="genStatusHint">Click generate to produce independent randomized question papers.</span>
+        </div>
+      </div>
+
+      <!-- 2. Generated Sets List & Export Options -->
+      <div class="generated-sets-section" id="generatedSetsSection" style="display:none">
+        <div class="generated-sets-header">
+          <div>
+            <h3 class="card-title text-base" id="generatedSetsSummary">Generated Sets</h3>
+            <p class="card-sub">Download individual set PDFs or print a combined multi-set exam booklet.</p>
+          </div>
+          <div class="flex gap-2 items-center flex-wrap">
+            <button type="button" class="btn btn-dark btn-sm" id="btnPrintAllSetsCombined" title="Print all sets sequentially with automatic page breaks">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+              <span>Print All (Combined PDF)</span>
+            </button>
+            <button type="button" class="btn btn-light btn-sm" id="btnDownloadAllHtml" title="Download standalone offline printable HTML files for each set">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Download All (HTML Files)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="sets-grid" id="setsGridContainer">
+          <!-- Dynamically filled with set cards -->
+        </div>
+      </div>
+    </div>
+
+    <footer class="modal-foot">
+      <div class="pdf-tip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span>To save as PDF: click <b>"Print / Save PDF"</b> and select <b>Destination: "Save as PDF"</b> in your browser.</span>
+      </div>
+      <button type="button" class="btn btn-light" id="modalMultiSetsDone">Done</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Hidden container for batch multi-set printing -->
+<div id="batchPrintContainer" class="batch-print-container" style="display:none"></div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
