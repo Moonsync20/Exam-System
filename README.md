@@ -2,6 +2,11 @@
 
 A split-screen academic productivity web application designed to dynamically compose, balance, format, and print university-standard examination question papers and solution keys in real time.
 
+🌐 **Live Production App (Vercel):** [https://exam-studio-psi.vercel.app](https://exam-studio-psi.vercel.app)  
+📖 **Interactive Viva & Architecture Defense Guide:** [https://exam-studio-psi.vercel.app/project_defense_guide.html](https://exam-studio-psi.vercel.app/project_defense_guide.html)  
+📄 **Defense Guide PDF:** [https://exam-studio-psi.vercel.app/ExamStudio_Project_Guide_and_Viva_Prep.pdf](https://exam-studio-psi.vercel.app/ExamStudio_Project_Guide_and_Viva_Prep.pdf)  
+📦 **GitHub Repository:** [https://github.com/Moonsync20/Exam-System](https://github.com/Moonsync20/Exam-System)
+
 ## 🌟 Key Features
 
 1. **Dual-Typography & Realistic A4 Simulation**:
